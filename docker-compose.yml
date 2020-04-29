@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  influxdb:
+    container_name: influxdb
+    image: influxdb
+    restart: always
+    volumes:
+      - ./influxdb:/var/lib/influxdb
+    ports:
+      - 8083:8083
+      - 8086:8086
+    networks:
+      - grafana-network
+
+  telegraf:
+    container_name: telegraf
+    image: telegraf
+    restart: always
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - influxdb
+    networks:
+      - grafana-network
+    depends_on:
+      - influxdb
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    user: "0"
+    restart: always
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - grafana-network
+    depends_on:
+      - telegraf
+
+networks:
+  grafana-network:
+    driver: bridge
